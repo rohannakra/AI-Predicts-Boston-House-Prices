@@ -1,5 +1,8 @@
 # To add a new cell, type '# %%'
 # To add a new markdown cell, type '# %% [markdown]'
+# %%
+from IPython import get_ipython
+
 # %% [markdown]
 # ## Objective: Predict the house price of a given house based on specific features.
 # %% [markdown]
@@ -18,6 +21,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import mean_squared_error
 from random import choice
+get_ipython().run_line_magic('matplotlib', 'inline')
 
 # Import other modules.
 import numpy as np
@@ -58,12 +62,21 @@ print(f'y_test.shape: {y_test.shape}')
 # #### Visualize the data
 
 # %%
-tsne = TSNE()
+print(f'% of zeros in data -> {(np.sum(data == 0)/data.size)*100:.2f}%')
 
-X_train_trans = tsne.fit_transform(X_train)
 
-scatter = plt.scatter(X_train_trans[:, 0], X_train_trans[:, 1], c=y_train)
-plt.legend(*scatter.legend_elements())
+fig, axs = plt.subplots(3, 5, figsize=(12.5, 7.5))
+features = dataset.feature_names
+
+axs = [ax for ax in axs.ravel()]
+
+for i in range(len(features)):
+    axs[i].scatter(data[:, i], target)
+    axs[i].set_title(features[i])
+
+# NOTE: It seems like the is not much correlation between the target and most features.
+#       This means that model should not be prone to outliers.
+#       The right feature to test this is 'DIS'.
 
 # %% [markdown]
 # #### Use linear model on the data.
