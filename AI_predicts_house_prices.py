@@ -10,16 +10,11 @@ from IPython import get_ipython
 
 # %%
 # Import sklearn modules.
-from sklearn.manifold import TSNE
 from sklearn.datasets import load_boston
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
-from sklearn.linear_model import LinearRegression
-from sklearn.svm import SVR
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.neural_network import MLPRegressor
+from sklearn.linear_model import LinearRegression, Ridge
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import mean_squared_error
+from sklearn.preprocessing import StandardScaler, PolynomialFeatures
+from sklearn.metrics import mean_squared_error, r2_score
 from random import choice
 get_ipython().run_line_magic('matplotlib', 'inline')
 
@@ -38,10 +33,6 @@ target = dataset.target
 
 print(data.shape)
 print(target.shape)
-
-# Check for zeros in data.
-print(np.sum(data == 0)/data.size)    # -> 13% (zeros)
-print(np.sum(data != 0)/data.size)    # -> 87% (non zeros)
 
 # Check for NaN values in data.
 print(np.isnan(np.sum(data)))    # -> False
@@ -75,8 +66,8 @@ for i in range(len(features)):
     axs[i].set_title(features[i])
 
 # NOTE: It seems like the is not much correlation between the target and most features.
-#       This means that model should not be prone to outliers.
-#       The right feature to test this is 'DIS'.
+#       This means that model should partly eliminate some features
+#       so that only the most important features are used.
 
 # %% [markdown]
 # #### Use linear model on the data.
@@ -91,8 +82,34 @@ lin_pred_test = linreg.predict(X_test)
 
 print(f'Train MSE: {mean_squared_error(y_train, lin_pred_train)}')
 print(f'Test MSE: {mean_squared_error(y_test, lin_pred_test)}')
-print(f'Train Score: {linreg.score(X_train, y_train)}')
-print(f'Test Score: {linreg.score(X_test, y_test)}')
+print(f'Train R^2 Score: {r2_score(y_train, lin_pred_train)}')
+print(f'Test R^2 Score: {r2_score(y_test, lin_pred_test)}')
+
+# %% [markdown]
+# #### Use different algorithm that will generalize to the data better
+
+# %%
+# Edit data to make features polynomial.
+quadratic = PolynomialFeatures()
+
+X_train_poly = quadratic.fit_transform(X_train)
+X_test_poly = quadratic.transform(X_test)
+
+lasso = Ridge(alpha=50)
+
+lasso.fit(X_train_poly, y_train)
+
+# NOTE: The reason why we use polynomial features is because the features that are 
+#       somewhat correlated to the target variable appear to be better fit through
+#       a polynomial model.
+
+lasso_pred_train = lasso.predict(X_train_poly)
+lasso_pred_test = lasso.predict(X_test_poly)
+
+print(f'Train MSE: {mean_squared_error(y_train, lasso_pred_train)}')
+print(f'Test MSE: {mean_squared_error(y_test, lasso_pred_test)}')
+print(f'Train R^2 Score: {r2_score(y_train, lasso_pred_train)}')
+print(f'Test R^2 Score: {r2_score(y_test, lasso_pred_test)}')
 
 # %% [markdown]
 # #### View the results of the algorithm
