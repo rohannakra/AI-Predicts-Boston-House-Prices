@@ -80,10 +80,10 @@ linreg.fit(X_train, y_train)
 lin_pred_train = linreg.predict(X_train)
 lin_pred_test = linreg.predict(X_test)
 
-print(f'Train MSE: {mean_squared_error(y_train, lin_pred_train)}')
-print(f'Test MSE: {mean_squared_error(y_test, lin_pred_test)}')
-print(f'Train R^2 Score: {r2_score(y_train, lin_pred_train)}')
-print(f'Test R^2 Score: {r2_score(y_test, lin_pred_test)}')
+print(f'Train MSE: {mean_squared_error(y_train, lin_pred_train):.2f}')
+print(f'Test MSE: {mean_squared_error(y_test, lin_pred_test):.2f}')
+print(f'Train R^2 Score: {r2_score(y_train, lin_pred_train)*100:.2f}%')
+print(f'Test R^2 Score: {r2_score(y_test, lin_pred_test)*100:.2f}%')
 
 # %% [markdown]
 # #### Use different algorithm that will generalize to the data better
@@ -106,10 +106,10 @@ lasso.fit(X_train_poly, y_train)
 lasso_pred_train = lasso.predict(X_train_poly)
 lasso_pred_test = lasso.predict(X_test_poly)
 
-print(f'Train MSE: {mean_squared_error(y_train, lasso_pred_train)}')
-print(f'Test MSE: {mean_squared_error(y_test, lasso_pred_test)}')
-print(f'Train R^2 Score: {r2_score(y_train, lasso_pred_train)}')
-print(f'Test R^2 Score: {r2_score(y_test, lasso_pred_test)}')
+print(f'Train MSE: {mean_squared_error(y_train, lasso_pred_train):.2f}')
+print(f'Test MSE: {mean_squared_error(y_test, lasso_pred_test):.2f}')
+print(f'Train R^2 Score: {r2_score(y_train, lasso_pred_train)*100:.2f}%')
+print(f'Test R^2 Score: {r2_score(y_test, lasso_pred_test)*100:.2f}%')
 
 # %% [markdown]
 # #### View the results of the algorithm
@@ -118,22 +118,58 @@ print(f'Test R^2 Score: {r2_score(y_test, lasso_pred_test)}')
 sample_target = choice(y_test)
 sample_index = np.where(y_test == sample_target)
 
-sample_pred = np.mean(linreg.predict(X_test[sample_index]))
+lin_sample_pred = np.mean(linreg.predict(X_test[sample_index]))
+lasso_samples_pred = np.mean(lasso.predict(X_test_poly[sample_index]))
 
-print(f'Predicted Price: {sample_pred:.1f}')
+print(f'linreg Predicted Price: {lin_sample_pred:.1f}')
+print(f'lasso Predicted Price: {lasso_samples_pred:.1f}')
 print(f'Target Price: {sample_target}')
 
 # %% [markdown]
 # #### Plot the results
 
 # %%
-X_test_trans = tsne.fit_transform(X_test)
+indexes, i = ([], 5)
 
-m = sorted(linreg.coef_, reverse=True)[:2]    # Getting the two most important coefficients.
-b = linreg.intercept_
-loss = expit(X_test_trans * m + b)
-scatter = plt.scatter(X_test_trans[:, 0], X_test_trans[:, 1], c=y_test)
-plt.plot(X_test_trans, loss, c='red')
-plt.legend(*scatter.legend_elements())
+while len(indexes) < 20:
+    
+    if len(np.where(y_test == y_test[i])[0]) == 1:
+        indexes.append(i)
+    
+    i += 1
+
+samples_target = sorted(y_test[indexes])
+
+indexes_sorted = []
+
+for t in samples_target:
+    indexes_sorted.append(np.where(y_test == t)[0][0])
+
+samples = X_test[indexes_sorted]
+
+samples_pred = {
+    'lasso': lasso.predict(quadratic.transform(samples)),
+    'lin': linreg.predict(samples)
+}
+
+plt.scatter(
+    samples[:, 12],
+    samples_target,
+    label='Data Points', color='purple'
+)
+
+plt.plot(
+    samples[:, 12],
+    samples_pred['lin'],
+    label='linreg'
+)
+
+plt.plot(
+    samples[:, 12],
+    samples_target,
+    label='lasso'
+)
+
+plt.legend()
 
 
